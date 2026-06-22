@@ -1,4 +1,3 @@
-/* รีเซ็ตค่าและใส่ฟอนต์แบบมนกลมมน */
 * {
   box-sizing: border-box;
   font-family: 'Fredoka', 'Arial', sans-serif;
@@ -15,7 +14,6 @@ body {
   align-items: center;
 }
 
-/* กล่องตู้สติกเกอร์ตรงกลางแบบกระจกใส (Glassmorphism) */
 .booth-card {
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(10px);
@@ -29,7 +27,6 @@ body {
   text-align: center;
 }
 
-/* หัวข้อหลัก */
 .main-title {
   margin: 0 0 5px 0;
   font-size: 30px;
@@ -46,28 +43,35 @@ body {
   font-weight: 500;
 }
 
-/* แถบเลือกธีมฟิล์ม */
-.layout-selector {
+/* จัดระเบียบส่วนควบคุมตัวเลือก */
+.settings-container {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
   margin-bottom: 25px;
+  flex-wrap: wrap;
+}
+
+.setting-item {
   background: #ffffff;
-  padding: 8px 16px;
+  padding: 6px 12px;
   border-radius: 20px;
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
   border: 2px solid #ffe1e8;
 }
 
-.layout-selector label {
-  font-size: 14px;
+.setting-item label {
+  font-size: 13px;
   font-weight: 600;
   color: #7d6973;
 }
 
 select {
-  padding: 6px 10px;
-  font-size: 14px;
+  padding: 4px 8px;
+  font-size: 13px;
   font-weight: 600;
   border-radius: 12px;
   border: 2px solid #ffccd7;
@@ -75,14 +79,8 @@ select {
   color: #5d4d54;
   outline: none;
   cursor: pointer;
-  transition: all 0.2s;
 }
 
-select:focus {
-  border-color: #ff7597;
-}
-
-/* กรอบด้านนอกของตัวกล้อง (ดีไซน์โพลารอยด์) */
 .camera-wrapper {
   background: #ffffff;
   padding: 12px;
@@ -91,6 +89,8 @@ select:focus {
   border: 3px dashed #ffb6c1;
   display: inline-block;
   margin-bottom: 20px;
+  width: 100%;
+  max-width: 370px;
 }
 
 .camera-container {
@@ -102,15 +102,9 @@ select:focus {
 
 video {
   width: 100%;
-  max-width: 350px;
   height: auto;
   transform: scaleX(-1);
   background: #fff0f2;
-}
-
-/* จัดการตำแหน่งปุ่มกดกลุ่มดาวน์โหลด */
-.action-area {
-  margin: 10px 0;
 }
 
 .button-group {
@@ -129,40 +123,30 @@ video {
   border-radius: 20px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  width: 90%;
-  letter-spacing: 0.5px;
+  width: 95%;
 }
 
-.btn:hover {
-  transform: translateY(-3px) scale(1.02);
-}
+.btn:hover { transform: translateY(-3px) scale(1.02); }
+.btn:active { transform: translateY(2px) scale(0.98); }
 
-.btn:active {
-  transform: translateY(2px) scale(0.98);
-}
-
-/* สีปุ่มเริ่มถ่ายรูป (ชมพูพีช) */
 .btn-start {
   background: linear-gradient(135deg, #ff7597 0%, #ff9ebb 100%);
   color: white;
   box-shadow: 0 6px 18px rgba(255, 117, 151, 0.35);
 }
 
-/* สีปุ่มเซฟรูปแผ่นยาว (ม่วงพาสเทล) */
 .btn-save {
   background: linear-gradient(135deg, #b19ffb 0%, #cfc5ff 100%);
   color: white;
   box-shadow: 0 6px 18px rgba(177, 159, 251, 0.35);
 }
 
-/* สีปุ่มเซฟรูปแบบแยกใบ (ฟ้าพาสเทลคิวท์ๆ) */
 .btn-individual {
   background: linear-gradient(135deg, #6ec6ff 0%, #9be2ff 100%);
   color: white;
   box-shadow: 0 6px 18px rgba(110, 198, 255, 0.35);
 }
 
-/* ตัวเลขเคาท์ดาวน์ */
 #countdown {
   position: absolute;
   top: 50%;
@@ -176,7 +160,6 @@ video {
   z-index: 10;
 }
 
-/* แฟลชกล้อง */
 #flash {
   position: absolute;
   top: 0;
@@ -189,13 +172,10 @@ video {
   z-index: 5;
 }
 
-/* พรีวิว Canvas แผ่นรวมบนหน้าเว็บ */
-.result-area {
-  margin: 20px 0;
-}
+.result-area { margin: 20px 0; }
 
 canvas {
-  width: 220px;
+  width: 200px;
   height: auto;
   border-radius: 16px;
   background: #ffffff;
