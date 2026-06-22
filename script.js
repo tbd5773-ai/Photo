@@ -4,6 +4,7 @@ const ctx = canvas.getContext("2d");
 const countdown = document.getElementById("countdown");
 const flash = document.getElementById("flash");
 const themeSelect = document.getElementById("themeSelect");
+const photoCountSelect = document.getElementById("photoCountSelect");
 
 let photos = [];
 
@@ -25,14 +26,17 @@ async function startCamera() {
 
 async function startBooth() {
   photos = [];
-  for (let i = 0; i < 4; i++) {
+  // ดึงค่าจำนวนรูปที่ผู้ใช้ต้องการถ่ายจาก Dropdown
+  const totalPhotos = parseInt(photoCountSelect.value);
+  
+  for (let i = 0; i < totalPhotos; i++) {
     await doCountdown();
     await takePhoto();
     await wait(500);
   }
+  
   generateStrip();
-  // ถ่ายเสร็จจะเด้งหน้าต่างพรีวิวแผ่นฟิล์มรวม 4 รูปให้อัตโนมัติก่อน
-  downloadStrip(); 
+  downloadStrip(); // เด้งหน้าต่างให้ดาวน์โหลดทันทีเมื่อถ่ายครบ
 }
 
 function wait(ms) {
@@ -84,9 +88,34 @@ function takePhoto() {
   });
 }
 
+// 🆕 ฟังก์ชันอัจฉริยะ แก้ปัญหารูปเบี้ยว/เลนส์กว้างเกิน (ทลายความรู้สึกเลนส์ 0.5x)
+// ระบบจะคำนวณตัดสัดส่วน (Crop) เฉพาะกึ่งกลางภาพให้เต็มกล่อง 1x พอดี สัดส่วนคนจะผอมและสมส่วนปกติ
+function drawCoverImage(context, img, x, y, w, h) {
+  const imgRatio = img.width / img.height;
+  const targetRatio = w / h;
+  let sx, sy, sw, sh;
+  
+  if (imgRatio > targetRatio) {
+    sh = img.height;
+    sw = img.height * targetRatio;
+    sx = (img.width - sw) / 2;
+    sy = 0;
+  } else {
+    sw = img.width;
+    sh = img.width / targetRatio;
+    sx = 0;
+    sy = (img.height - sh) / 2;
+  }
+  context.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+}
+
+// วาดแผ่นยาวเรียงภาพอัตโนมัติตามจำนวนรูปที่ถ่ายจริง
 function generateStrip() {
+  const photoCount = photos.length;
+  
   canvas.width = 400;
-  canvas.height = 1350;
+  // คำนวณความสูงแผ่นฟิล์มตามจำนวนรูปจริง (หัว 100px + (รูปละ 300px) + ท้าย 50px)
+  canvas.height = 100 + (photoCount * 300) + 50;
   
   let theme = themeSelect.value;
   let bgColor = "white";
@@ -101,31 +130,34 @@ function generateStrip() {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   
   ctx.fillStyle = textColor;
-  ctx.font = "bold 28px Arial";
-  ctx.fillText("✨ PIXIE PHOTOBOOTH ✨", 25, 50);
+  ctx.font = "bold 26px Arial";
+  ctx.textAlign = "center";
+  ctx.fillText("✨ PIXIE PHOTOBOOTH ✨", canvas.width / 2, 55);
   
   let y = 100;
   photos.forEach((photo, index) => {
-    ctx.drawImage(photo, 25, y, 350, 250);
+    // ใช้ฟังก์ชันตัดภาพตรงกลางแทนการบีบรูป
+    drawCoverImage(ctx, photo, 25, y, 350, 250);
+    
     ctx.strokeStyle = textColor;
     ctx.lineWidth = 5;
     ctx.strokeRect(25, y, 350, 250);
     
+    ctx.fillStyle = textColor;
     ctx.font = "20px Arial";
-    ctx.fillText("📸 Shot " + (index + 1), 140, y + 275);
+    ctx.fillText("📸 Shot " + (index + 1), canvas.width / 2, y + 275);
     y += 300;
   });
   
-  ctx.font = "20px Arial";
+  ctx.font = "18px Arial";
   const date = new Date().toLocaleDateString();
-  ctx.fillText(date, 120, 1320);
+  ctx.fillText(date, canvas.width / 2, canvas.height - 25);
 }
 
-// 🆕 ฟังก์ชันสร้างรูปเดี่ยวแบบ "มีกรอบแยกทีละใบตามธีม"
 function createSingleFramedPhoto(photo, index) {
   const singleCanvas = document.createElement("canvas");
   singleCanvas.width = 400;
-  singleCanvas.height = 360; // จัดสัดส่วนให้เหลือขอบด้านล่างสำหรับใส่ข้อความคิวท์ๆ
+  singleCanvas.height = 360;
   const sCtx = singleCanvas.getContext("2d");
   
   let theme = themeSelect.value;
@@ -137,17 +169,15 @@ function createSingleFramedPhoto(photo, index) {
   if (theme === "blue") bgColor = "#cfefff";
   if (theme === "retro") bgColor = "#f5deb3";
   
-  // เทสีพื้นหลังกรอบเดี่ยว
   sCtx.fillStyle = bgColor;
   sCtx.fillRect(0, 0, singleCanvas.width, singleCanvas.height);
   
-  // วาดรูปถ่ายลงไปตรงกลาง
-  sCtx.drawImage(photo, 25, 25, 350, 250);
+  // ตัดกึ่งกลางภาพสำหรับรูปแบบเดี่ยวด้วยเช่นกัน
+  drawCoverImage(sCtx, photo, 25, 25, 350, 250);
   sCtx.strokeStyle = textColor;
   sCtx.lineWidth = 5;
   sCtx.strokeRect(25, 25, 350, 250);
   
-  // ใส่ตัวอักษรกำกับช็อตและวันที่ด้านล่างรูปเดี่ยว
   sCtx.fillStyle = textColor;
   sCtx.font = "bold 20px Arial";
   sCtx.fillText("📸 Shot " + (index + 1), 35, 320);
@@ -159,15 +189,13 @@ function createSingleFramedPhoto(photo, index) {
   return singleCanvas.toDataURL("image/png");
 }
 
-// ฟังก์ชันกดเซฟแบบรวมแผ่นยาว (เรียง 4)
 function downloadStrip() {
   if (photos.length === 0) { alert("กรุณาถ่ายรูปก่อนน้าา~ 💕"); return; }
-  
   const dataUrl = canvas.toDataURL("image/png");
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
   
   if (isMobile) {
-    showMobileOverlay([dataUrl], "✨ แตะค้างที่แผ่นฟิล์ม เพื่อบันทึกแบบเรียง 4 รูปได้เลยค่ะ! ✨");
+    showMobileOverlay([dataUrl], `✨ แตะค้างที่แผ่นฟิล์ม เพื่อบันทึกแบบเรียง ${photos.length} รูปได้เลยค่ะ! ✨`);
   } else {
     const link = document.createElement("a");
     link.download = "pixie-photostrip.png";
@@ -176,17 +204,14 @@ function downloadStrip() {
   }
 }
 
-// 🆕 ฟังก์ชันกดเซฟแบบแยกทีละรูป (มีกรอบ)
 function downloadIndividual() {
   if (photos.length === 0) { alert("กรุณาถ่ายรูปก่อนน้าา~ 💕"); return; }
-  
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
   const imageSources = photos.map((photo, index) => createSingleFramedPhoto(photo, index));
   
   if (isMobile) {
     showMobileOverlay(imageSources, "✨ แตะค้างที่รูปถ่ายแต่ละใบ เพื่อบันทึกแยกรูปได้เลยค่ะ! ✨");
   } else {
-    // บนคอมพิวเตอร์ทั่วไป จะดาวน์โหลดไฟล์แยกเป็น 4 ไฟล์ให้ทันที
     imageSources.forEach((url, index) => {
       const link = document.createElement("a");
       link.download = `pixie-shot-${index + 1}.png`;
@@ -196,14 +221,11 @@ function downloadIndividual() {
   }
 }
 
-// 🆕 ตัวจัดการหน้าต่างป๊อปอัปสำหรับ iPad/มือถือ เพื่อให้เซฟรูปได้ง่ายและสมบูรณ์ 100%
 function showMobileOverlay(imageUrls, titleText) {
   let overlay = document.getElementById("mobileOverlay");
-  
   if (!overlay) {
     overlay = document.createElement("div");
     overlay.id = "mobileOverlay";
-    // จัดตำแหน่งให้อยู่บนสุดและเปิดสกรอลล์ดาวน์โหลดรูปภาพแนวตั้งได้
     overlay.style.position = "fixed";
     overlay.style.top = "0"; overlay.style.left = "0";
     overlay.style.width = "100vw"; overlay.style.height = "100vh";
@@ -220,9 +242,8 @@ function showMobileOverlay(imageUrls, titleText) {
     document.body.appendChild(overlay);
   }
   
-  overlay.innerHTML = ""; // ล้างข้อมูลเดิมออกก่อน
+  overlay.innerHTML = "";
   
-  // สร้างปุ่มปิดดีไซน์น่ารักนุ่มนวล
   const closeBtn = document.createElement("button");
   closeBtn.innerText = "❌ CLOSE / ปิดหน้าต่าง";
   closeBtn.style.padding = "12px 24px";
@@ -236,7 +257,6 @@ function showMobileOverlay(imageUrls, titleText) {
   closeBtn.onclick = () => overlay.style.display = "none";
   overlay.appendChild(closeBtn);
   
-  // คำแนะนำการเซฟ
   const info = document.createElement("p");
   info.innerText = titleText;
   info.style.color = "white";
@@ -246,7 +266,6 @@ function showMobileOverlay(imageUrls, titleText) {
   info.style.textAlign = "center";
   overlay.appendChild(info);
   
-  // วาดรูปภาพลงในป๊อปอัป (หากเลือกแบบแยกรูป จะเรียงลงมาให้กดเซฟครบทั้ง 4 ใบ)
   imageUrls.forEach(url => {
     const img = document.createElement("img");
     img.src = url;
